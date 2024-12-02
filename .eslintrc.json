@@ -1,0 +1,24 @@
+{
+    "parser": "@typescript-eslint/parser", // Utilise le parser TypeScript
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:prettier/recommended" // Intègre Prettier avec ESLint
+    ],
+    "plugins": ["@typescript-eslint", "prettier"],
+    "env": {
+        "browser": true,
+        "es2021": true,
+        "node": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 12,
+        "sourceType": "module"
+    },
+    "rules": {
+        // Vous pouvez personnaliser vos règles ici
+        "prettier/prettier": "error" // Traite les erreurs Prettier comme des erreurs ESLint
+        // Exemple : désactiver la règle semi
+        // "semi": ["error", "never"]
+    }
+}
