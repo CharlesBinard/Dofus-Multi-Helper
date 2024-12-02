@@ -11,4 +11,5 @@ export type SettingsProps = {
     registerShortcut: (type: keyof Shortcuts) => void;
     clickAllDelays: ClickAllDelays;
     updateClickAllDelays: ({ min, max }: UpdateClickAllDelaysParams) => void;
+    removeShortcut: (type: keyof Shortcuts) => void;
 }

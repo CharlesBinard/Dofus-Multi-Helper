@@ -21,6 +21,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             shortcuts::commands::register_shortcut,
             shortcuts::commands::get_shortcuts,
+            shortcuts::commands::remove_shortcut_key,
             windows::commands::get_active_dofus_window,
             windows::commands::focus_window_command,
             windows::commands::set_tauri_always_on_top,

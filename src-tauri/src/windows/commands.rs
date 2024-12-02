@@ -75,6 +75,7 @@ pub async fn next_dofus_window(
 
     let app_hwnd = window.hwnd().unwrap();
     if !manager.is_focused_on_app_or_dofus(app_hwnd) {
+        println!("Focus not on app or dofus");
         return Ok(());
     }
 

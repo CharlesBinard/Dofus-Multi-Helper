@@ -14,6 +14,7 @@ export const Settings: React.FC<SettingsProps> = ({
   registerShortcut,
   clickAllDelays,
   updateClickAllDelays,
+  removeShortcut,
 }) => {
   return (
     <Flex
@@ -72,6 +73,7 @@ export const Settings: React.FC<SettingsProps> = ({
           shortcutType="next"
           shortcutKey={shortcuts.next}
           onRegister={registerShortcut}
+          onRemove={removeShortcut}
           watching={watchingInput === 'next'}
         />
         <ShortcutSettingInput
@@ -79,6 +81,7 @@ export const Settings: React.FC<SettingsProps> = ({
           shortcutType="prev"
           shortcutKey={shortcuts.prev}
           onRegister={registerShortcut}
+          onRemove={removeShortcut}
           watching={watchingInput === 'prev'}
         />
         <ShortcutSettingInput
@@ -86,6 +89,7 @@ export const Settings: React.FC<SettingsProps> = ({
           shortcutType="click_all"
           shortcutKey={shortcuts.click_all}
           onRegister={registerShortcut}
+          onRemove={removeShortcut}
           watching={watchingInput === 'click_all'}
         />
         <ShortcutSettingInput
@@ -93,6 +97,7 @@ export const Settings: React.FC<SettingsProps> = ({
           shortcutType="click_all_delay"
           shortcutKey={shortcuts.click_all_delay}
           onRegister={registerShortcut}
+          onRemove={removeShortcut}
           watching={watchingInput === 'click_all_delay'}
         />
       </Flex>

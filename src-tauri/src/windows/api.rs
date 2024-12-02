@@ -3,8 +3,9 @@ use std::thread;
 use tokio::time::Duration;
 use windows::Win32::Foundation::{BOOL, HWND, LPARAM, POINT, WPARAM};
 use windows::Win32::System::ProcessStatus::GetModuleBaseNameA;
-use windows::Win32::System::Threading::AttachThreadInput;
+use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
+use windows::Win32::UI::Input::KeyboardAndMouse::{SetActiveWindow, SetFocus};
 use windows::Win32::UI::WindowsAndMessaging::*;
 
 pub fn get_window_title(hwnd: HWND) -> Option<String> {
@@ -48,31 +49,45 @@ pub fn send_click(hwnd: HWND, pos: POINT) -> Result<(), String> {
 
 pub fn focus_window(hwnd: HWND) -> Result<(), String> {
     unsafe {
-        let target_thread_id = GetWindowThreadProcessId(hwnd, None);
-        let foreground_hwnd = GetForegroundWindow();
-        let foreground_thread_id = GetWindowThreadProcessId(foreground_hwnd, None);
+        if !IsWindow(hwnd).as_bool() {
+            return Err("Invalid window handle".to_string());
+        }
 
-        if foreground_thread_id != target_thread_id {
-            if !AttachThreadInput(foreground_thread_id, target_thread_id, true).as_bool() {
-                return Err("Échec de l'attachement du thread input".to_string());
+        let target_thread = GetWindowThreadProcessId(hwnd, None);
+        let current_thread = GetCurrentThreadId();
+        let foreground_window = GetForegroundWindow();
+        let foreground_thread = GetWindowThreadProcessId(foreground_window, None);
+
+        if foreground_thread != target_thread {
+            if !AttachThreadInput(foreground_thread, target_thread, true).as_bool() {
+                return Err("Failed to attach foreground thread".to_string());
+            }
+        }
+        if current_thread != target_thread {
+            if !AttachThreadInput(current_thread, target_thread, true).as_bool() {
+                return Err("Failed to attach current thread".to_string());
             }
         }
 
-        if !ShowWindow(hwnd, SW_RESTORE).as_bool() {
-            return Err("Échec de la restauration de la fenêtre".to_string());
+        if IsIconic(hwnd).as_bool() {
+            let _ = ShowWindow(hwnd, SW_RESTORE);
         }
+        let _ = ShowWindow(hwnd, SW_SHOW);
 
         let _ = BringWindowToTop(hwnd);
 
-        if !SetForegroundWindow(hwnd).as_bool() {
-            return Err("Échec de la mise en avant de la fenêtre".to_string());
+        SetActiveWindow(hwnd).map_err(|e| e.to_string())?;
+        SetFocus(hwnd).map_err(|e| e.to_string())?;
+
+        if foreground_thread != target_thread {
+            let _ = AttachThreadInput(foreground_thread, target_thread, false);
+        }
+        if current_thread != target_thread {
+            let _ = AttachThreadInput(current_thread, target_thread, false);
         }
 
-        if foreground_thread_id != target_thread_id {
-            let _ = AttachThreadInput(foreground_thread_id, target_thread_id, false);
-        }
+        Ok(())
     }
-    Ok(())
 }
 
 pub fn fetch_dofus_windows() -> Vec<DofusWindow> {

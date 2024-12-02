@@ -4,8 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Shortcuts } from '../../types';
 import { ClickAllDelays, UpdateClickAllDelaysParams } from './types';
 
-
-
 export const useShortcuts = () => {
     const [shortcuts, setShortcuts] = useState<Shortcuts>({
         next: '',
@@ -15,8 +13,8 @@ export const useShortcuts = () => {
     });
     const [watchingInput, setWatchingInput] = useState<keyof Shortcuts | undefined>(undefined);
 
-    const storageClickAllDelays = JSON.parse(localStorage.getItem('clickAllDelays') || '{}')
-    const [clickAllDelays, setClickAllDelays] = useState<ClickAllDelays>(storageClickAllDelays || { min: 100, max: 130 });
+    const storageClickAllDelays = JSON.parse(localStorage.getItem('clickAllDelays') || '{ "min": 100, "max": 130 }')
+    const [clickAllDelays, setClickAllDelays] = useState<ClickAllDelays>(storageClickAllDelays);
 
     const updateClickAllDelays = ({ min, max }: UpdateClickAllDelaysParams) => {
         setClickAllDelays((prev) => {
@@ -48,6 +46,14 @@ export const useShortcuts = () => {
             setWatchingInput(shortcutType);
         } catch (error) {
             console.error(`Failed to register shortcut for ${shortcutType}:`, error);
+        }
+    }, []);
+
+    const removeShortcut = useCallback(async (shortcutType: keyof Shortcuts) => {
+        try {
+            await invoke('remove_shortcut_key', { shortcutType });
+        } catch (error) {
+            console.error(`Failed to remove shortcut for ${shortcutType}:`, error);
         }
     }, []);
 
@@ -92,7 +98,8 @@ export const useShortcuts = () => {
                 'input_register_event',
                 (event) => {
                     const { shortcut, key } = event.payload;
-                    if (shortcut && key) {
+                    console.log('input_register_event', shortcut, key);
+                    if (shortcut) {
                         setShortcuts((prev) => ({
                             ...prev,
                             [shortcut]: key,
@@ -132,6 +139,7 @@ export const useShortcuts = () => {
         watchingInput,
         registerShortcut,
         clickAllDelays,
-        updateClickAllDelays
+        updateClickAllDelays,
+        removeShortcut
     };
 };

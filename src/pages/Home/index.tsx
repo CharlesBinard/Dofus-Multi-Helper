@@ -21,6 +21,7 @@ export const Home: React.FC = () => {
     watchingInput,
     registerShortcut,
     clickAllDelays,
+    removeShortcut,
     updateClickAllDelays,
   } = useShortcuts();
   const { isAlwaysOnTop, toggleAlwaysOnTop } = useAlwaysOntop();
@@ -101,6 +102,7 @@ export const Home: React.FC = () => {
           registerShortcut={registerShortcut}
           clickAllDelays={clickAllDelays}
           updateClickAllDelays={updateClickAllDelays}
+          removeShortcut={removeShortcut}
         />
       )}
     </Box>

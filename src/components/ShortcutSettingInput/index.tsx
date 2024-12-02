@@ -1,5 +1,5 @@
 import { ActionIcon, Flex, Kbd, Loader, Paper, Text } from '@mantine/core';
-import { IconReplace } from '@tabler/icons-react';
+import { IconReplace, IconTrash } from '@tabler/icons-react';
 import { ShortcutSettingProps } from './types';
 
 const formatShortcut = (shortcut: string) => {
@@ -14,6 +14,7 @@ export const ShortcutSettingInput: React.FC<ShortcutSettingProps> = ({
   shortcutType,
   shortcutKey,
   onRegister,
+  onRemove,
   watching,
 }) => (
   <Paper shadow="md" radius="md" w="100%" bg={'#2e2e2e'} p="md">
@@ -35,6 +36,15 @@ export const ShortcutSettingInput: React.FC<ShortcutSettingProps> = ({
         ) : (
           <Loader />
         )}
+        <ActionIcon
+          variant="filled"
+          color="red"
+          disabled={watching}
+          aria-label={`Remove shortcut for ${label}`}
+          onClick={() => onRemove(shortcutType)}
+        >
+          <IconTrash style={{ width: '70%', height: '70%' }} stroke={1.5} />
+        </ActionIcon>
       </Flex>
     </Flex>
   </Paper>
