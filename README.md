@@ -32,8 +32,8 @@ Un outil pratique pour faciliter la gestion du multi-compte sur Dofus Unity, off
 
 ## Installation
 
-1. Téléchargez le fichier MSI depuis la section "Releases"
-2. Exécutez le fichier MSI
+1. Téléchargez le fichier MSI ou Exe depuis la section "Releases"
+2. Exécutez le fichier MSI/Exe
 3. Suivez les étapes d'installation
 4. Lancez l'application depuis le menu démarrer ou le raccourci bureau
 5. Configurez vos raccourcis selon vos préférences
