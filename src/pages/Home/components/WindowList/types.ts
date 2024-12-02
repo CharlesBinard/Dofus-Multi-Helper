@@ -1,4 +1,4 @@
-import { DofusWindow } from "../../types";
+import { DofusWindow } from "../../../../types";
 
 export type WindowListProps = {
     windows: DofusWindow[];
