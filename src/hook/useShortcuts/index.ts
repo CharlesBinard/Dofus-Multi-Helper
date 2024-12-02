@@ -15,8 +15,8 @@ export const useShortcuts = () => {
     });
     const [watchingInput, setWatchingInput] = useState<keyof Shortcuts | undefined>(undefined);
 
-    const storageClickAllDelays = JSON.parse(localStorage.getItem('clickAllDelays') || '{ min: 100, max: 130 }')
-    const [clickAllDelays, setClickAllDelays] = useState<ClickAllDelays>(storageClickAllDelays);
+    const storageClickAllDelays = JSON.parse(localStorage.getItem('clickAllDelays') || '{}')
+    const [clickAllDelays, setClickAllDelays] = useState<ClickAllDelays>(storageClickAllDelays || { min: 100, max: 130 });
 
     const updateClickAllDelays = ({ min, max }: UpdateClickAllDelaysParams) => {
         setClickAllDelays((prev) => {
