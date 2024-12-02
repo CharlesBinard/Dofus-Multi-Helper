@@ -29,7 +29,7 @@ export const Home: React.FC = () => {
 
   const { toggleAutoAdjustSize, autoAdjustSize } = useWindowSizeAdjuster(
     contentRef,
-    [windows, selectedTab, watchingInput]
+    [windows, selectedTab, watchingInput, !!activeDofusWindow]
   );
 
   return (

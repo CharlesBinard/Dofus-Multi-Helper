@@ -15,7 +15,7 @@ export const WindowItem: React.FC<WindowItemProps> = ({
       pr="xs"
       key={win.hwnd}
       withBorder={isActive}
-      bd={isActive ? '2px dashed gray.5' : '1px solid gray.7'}
+      bd={isActive ? '2px dashed gray.5' : '2px solid gray.7'}
       bg={isActive ? '#1e1e1e' : '#2e2e2e'}
       onClick={() => focusWindow(win.hwnd)}
       style={{ width: '100%', cursor: 'pointer' }}
