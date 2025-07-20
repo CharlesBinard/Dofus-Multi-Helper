@@ -264,6 +264,7 @@ pub fn send_key_to_all_dofus_windows(
 pub fn auto_invite_all_characters(
     state: State<'_, Arc<Mutex<WindowManager>>>,
     window: Window,
+    focus_chat_key: String,
 ) -> Result<(), String> {
     
     let manager = state
@@ -289,7 +290,7 @@ pub fn auto_invite_all_characters(
     focus_window(first_hwnd).map_err(|e| format!("Erreur lors du focus de la première fenêtre: {}", e))?;
     thread::sleep(Duration::from_millis(100));
 
-    send_key("=").map_err(|e| format!("Erreur lors de l'envoi de la touche '=': {}", e))?;
+    send_key(&focus_chat_key).map_err(|e| format!("Erreur lors de l'envoi de la touche '{}': {}", focus_chat_key, e))?;
     thread::sleep(Duration::from_millis(50));
 
     // Inviter tous les autres personnages depuis la première fenêtre

@@ -20,6 +20,10 @@ export const Settings: React.FC<SettingsProps> = ({
   setAutoFollowLeaderKey,
   watchingAutoFollowLeaderKey,
   watchAutoFollowLeaderKey,
+  focusChatKey,
+  setFocusChatKey,
+  watchingFocusChatKey,
+  watchFocusChatKey,
 }) => {
   return (
     <Flex
@@ -30,7 +34,9 @@ export const Settings: React.FC<SettingsProps> = ({
       style={{
         width: 'max-content',
         minWidth: 'min-content',
-        overflow: 'hidden',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
       }}
     >
       <Text size="xl" fw={500}>
@@ -71,6 +77,13 @@ export const Settings: React.FC<SettingsProps> = ({
             onSet={watchAutoFollowLeaderKey}
             onClear={() => setAutoFollowLeaderKey('')}
             watching={watchingAutoFollowLeaderKey}
+          />
+          <KeySettingInput
+            label="Focus Chat Dofus key"
+            value={focusChatKey}
+            onSet={watchFocusChatKey}
+            onClear={() => setFocusChatKey('')}
+            watching={watchingFocusChatKey}
           />
         </Flex>
       </Paper>

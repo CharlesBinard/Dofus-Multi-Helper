@@ -19,4 +19,8 @@ export type SettingsProps = {
   setAutoFollowLeaderKey: (key: string) => void;
   watchingAutoFollowLeaderKey: boolean;
   watchAutoFollowLeaderKey: (command: string) => void;
+  focusChatKey: string;
+  setFocusChatKey: (key: string) => void;
+  watchingFocusChatKey: boolean;
+  watchFocusChatKey: () => void;
 };

@@ -18,6 +18,8 @@ export const useShortcuts = () => {
   >(undefined);
   const [watchingAutoFollowLeaderKey, setWatchingAutoFollowLeaderKey] =
     useState<boolean>(false);
+  const [watchingFocusChatKey, setWatchingFocusChatKey] =
+    useState<boolean>(false);
 
   const storageClickAllDelays = JSON.parse(
     localStorage.getItem('clickAllDelays') || '{ "min": 100, "max": 130 }'
@@ -27,6 +29,9 @@ export const useShortcuts = () => {
   );
   const [autoFollowLeaderKey, setAutoFollowLeaderKey] = useState<string>(
     localStorage.getItem('autoFollowLeaderKey') || '/'
+  );
+  const [focusChatKey, setFocusChatKey] = useState<string>(
+    localStorage.getItem('focusChatKey') || '='
   );
 
   const updateClickAllDelays = ({ min, max }: UpdateClickAllDelaysParams) => {
@@ -46,12 +51,26 @@ export const useShortcuts = () => {
     localStorage.setItem('autoFollowLeaderKey', key);
   };
 
+  const handleSetFocusChatKey = (key: string) => {
+    setFocusChatKey(key);
+    localStorage.setItem('focusChatKey', key);
+  };
+
   const watchAutoFollowLeaderKey = async () => {
     try {
       await invoke('watch_key_to_send');
       setWatchingAutoFollowLeaderKey(true);
     } catch (error) {
       console.error('Failed to watch key to send:', error);
+    }
+  };
+
+  const watchFocusChatKey = async () => {
+    try {
+      await invoke('watch_key_to_send');
+      setWatchingFocusChatKey(true);
+    } catch (error) {
+      console.error('Failed to watch focus chat key:', error);
     }
   };
 
@@ -90,6 +109,19 @@ export const useShortcuts = () => {
     }
   }, []);
 
+  const handleAutoFollowLeader = useCallback(async () => {
+    await invoke('send_key_to_all_dofus_windows', {
+      key: autoFollowLeaderKey,
+      repeat: 2,
+    });
+  }, [autoFollowLeaderKey]);
+
+  const handleAutoInviteAll = useCallback(async () => {
+    await invoke('auto_invite_all_characters', {
+      focusChatKey: focusChatKey,
+    });
+  }, [focusChatKey]);
+
   const handleShortcutTriggered = useCallback(
     async (shortcutType: keyof Shortcuts) => {
       try {
@@ -112,19 +144,10 @@ export const useShortcuts = () => {
             });
             break;
           case 'auto_follow_leader':
-            await invoke('send_key_to_all_dofus_windows', {
-              key: autoFollowLeaderKey,
-              repeat: 2,
-            });
+            await handleAutoFollowLeader();
             break;
           case 'auto_invite_all':
-            console.log('🚀 Auto invite all triggered!');
-            try {
-              await invoke('auto_invite_all_characters');
-              console.log('✅ Auto invite all completed successfully');
-            } catch (error) {
-              console.error('❌ Error in auto_invite_all:', error);
-            }
+            await handleAutoInviteAll();
             break;
           default:
             console.warn(`Unhandled shortcut type: ${shortcutType}`);
@@ -133,7 +156,7 @@ export const useShortcuts = () => {
         console.error(`Error handling shortcut ${shortcutType}:`, error);
       }
     },
-    [clickAllDelays, autoFollowLeaderKey]
+    [clickAllDelays, autoFollowLeaderKey, focusChatKey]
   );
 
   useEffect(() => {
@@ -163,7 +186,6 @@ export const useShortcuts = () => {
         'shortcut_triggered',
         (event) => {
           const { shortcut } = event.payload;
-          console.log('🔥 Shortcut triggered event received:', shortcut);
           if (shortcut) {
             handleShortcutTriggered(shortcut);
           }
@@ -174,8 +196,13 @@ export const useShortcuts = () => {
         'key_to_send_set',
         (event) => {
           const { key } = event.payload;
-          handleSetAutoFollowLeaderKey(key);
-          setWatchingAutoFollowLeaderKey(false);
+          if (watchingAutoFollowLeaderKey) {
+            handleSetAutoFollowLeaderKey(key);
+            setWatchingAutoFollowLeaderKey(false);
+          } else if (watchingFocusChatKey) {
+            handleSetFocusChatKey(key);
+            setWatchingFocusChatKey(false);
+          }
         }
       );
     };
@@ -201,5 +228,11 @@ export const useShortcuts = () => {
     setAutoFollowLeaderKey: handleSetAutoFollowLeaderKey,
     watchingAutoFollowLeaderKey,
     watchAutoFollowLeaderKey,
+    focusChatKey,
+    setFocusChatKey: handleSetFocusChatKey,
+    watchingFocusChatKey,
+    watchFocusChatKey,
+    handleAutoFollowLeader,
+    handleAutoInviteAll,
   };
 };

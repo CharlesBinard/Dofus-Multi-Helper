@@ -1,6 +1,12 @@
 // pages/Home/Home.tsx
 import { ActionIcon, Box, Flex } from '@mantine/core';
-import { IconAdjustments, IconRefresh, IconSword } from '@tabler/icons-react';
+import {
+  IconAdjustments,
+  IconRefresh,
+  IconShoe,
+  IconSword,
+  IconUsersGroup,
+} from '@tabler/icons-react';
 import React, { useRef, useState } from 'react';
 import { useAlwaysOntop } from '../../hook/useAlwaysOntop';
 import { useShortcuts } from '../../hook/useShortcuts';
@@ -27,6 +33,12 @@ export const Home: React.FC = () => {
     setAutoFollowLeaderKey,
     watchingAutoFollowLeaderKey,
     watchAutoFollowLeaderKey,
+    focusChatKey,
+    setFocusChatKey,
+    watchingFocusChatKey,
+    watchFocusChatKey,
+    handleAutoFollowLeader,
+    handleAutoInviteAll,
   } = useShortcuts();
   const { isAlwaysOnTop, toggleAlwaysOnTop } = useAlwaysOntop();
 
@@ -34,7 +46,13 @@ export const Home: React.FC = () => {
 
   const { toggleAutoAdjustSize, autoAdjustSize } = useWindowSizeAdjuster(
     contentRef,
-    [windows, selectedTab, watchingInput, !!activeDofusWindow]
+    [
+      windows,
+      selectedTab,
+      watchingInput,
+      !!activeDofusWindow,
+      watchingFocusChatKey,
+    ]
   );
 
   return (
@@ -64,6 +82,29 @@ export const Home: React.FC = () => {
           title="Refresh windows"
         >
           <IconRefresh style={{ width: '70%', height: '70%' }} stroke={1.5} />
+        </ActionIcon>
+        {/* Button to invite all */}
+        <ActionIcon
+          variant="filled"
+          aria-label="Invite all"
+          color="gray"
+          onClick={handleAutoInviteAll}
+          title="Invite all"
+        >
+          <IconUsersGroup
+            style={{ width: '70%', height: '70%' }}
+            stroke={1.5}
+          />
+        </ActionIcon>
+        {/* Button to toggle auto follow leader */}
+        <ActionIcon
+          variant="filled"
+          aria-label="Toggle auto follow leader"
+          color="gray"
+          onClick={handleAutoFollowLeader}
+          title="Toggle auto follow leader"
+        >
+          <IconShoe style={{ width: '70%', height: '70%' }} />
         </ActionIcon>
         <ActionIcon
           variant="filled"
@@ -111,6 +152,10 @@ export const Home: React.FC = () => {
           setAutoFollowLeaderKey={setAutoFollowLeaderKey}
           watchingAutoFollowLeaderKey={watchingAutoFollowLeaderKey}
           watchAutoFollowLeaderKey={watchAutoFollowLeaderKey}
+          focusChatKey={focusChatKey}
+          setFocusChatKey={setFocusChatKey}
+          watchingFocusChatKey={watchingFocusChatKey}
+          watchFocusChatKey={watchFocusChatKey}
         />
       )}
     </Box>
