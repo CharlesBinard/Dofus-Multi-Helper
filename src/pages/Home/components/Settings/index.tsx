@@ -1,6 +1,7 @@
 // components/Settings/Settings.tsx
 import { Flex, NumberInput, Paper, Switch, Text } from '@mantine/core';
 import React from 'react';
+import { KeySettingInput } from '../../../../components/KeySettingInput';
 import { ShortcutSettingInput } from '../../../../components/ShortcutSettingInput';
 import { SettingsProps } from './types';
 
@@ -15,6 +16,10 @@ export const Settings: React.FC<SettingsProps> = ({
   clickAllDelays,
   updateClickAllDelays,
   removeShortcut,
+  autoFollowLeaderKey,
+  setAutoFollowLeaderKey,
+  watchingAutoFollowLeaderKey,
+  watchAutoFollowLeaderKey,
 }) => {
   return (
     <Flex
@@ -60,6 +65,13 @@ export const Settings: React.FC<SettingsProps> = ({
               updateClickAllDelays({ max: Number(value) || 130 })
             }
           />
+          <KeySettingInput
+            label="Auto Follow Dofus key"
+            value={autoFollowLeaderKey}
+            onSet={() => watchAutoFollowLeaderKey('auto_follow_leader')}
+            onClear={() => setAutoFollowLeaderKey('')}
+            watching={watchingAutoFollowLeaderKey}
+          />
         </Flex>
       </Paper>
 
@@ -99,6 +111,14 @@ export const Settings: React.FC<SettingsProps> = ({
           onRegister={registerShortcut}
           onRemove={removeShortcut}
           watching={watchingInput === 'click_all_delay'}
+        />
+        <ShortcutSettingInput
+          label="Follow leader"
+          shortcutType="auto_follow_leader"
+          shortcutKey={shortcuts.auto_follow_leader}
+          onRegister={registerShortcut}
+          onRemove={removeShortcut}
+          watching={watchingInput === 'auto_follow_leader'}
         />
       </Flex>
     </Flex>

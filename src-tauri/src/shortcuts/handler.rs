@@ -3,6 +3,11 @@ use tauri::Emitter;
 use super::store::ShortcutStore;
 use super::models::ShortcutPayload;
 
+#[derive(Clone, serde::Serialize)]
+struct KeyToSendPayload {
+    key: String,
+}
+
 pub fn handle_event(event: rdev::Event, store: &ShortcutStore, app_handle: &tauri::AppHandle) {
     let key_str = match event.event_type {
         EventType::KeyPress(key) => format!("{:?}", key),
@@ -15,6 +20,14 @@ pub fn handle_event(event: rdev::Event, store: &ShortcutStore, app_handle: &taur
         },
         _ => return
     };
+
+    let mut watching_key_to_send = store.watching_key_to_send.lock().unwrap();
+    if *watching_key_to_send {
+        let payload = KeyToSendPayload { key: key_str.clone() };
+        let _ = app_handle.emit("key_to_send_set", payload);
+        *watching_key_to_send = false;
+        return;
+    }
 
     let mut registering = store.registering.lock().unwrap();
     

@@ -1,4 +1,4 @@
-use super::api::{focus_window, send_click};
+use super::api::{focus_window, send_click, send_key};
 use super::manager::WindowManager;
 use rand::Rng;
 use serde::Deserialize;
@@ -8,6 +8,7 @@ use std::thread;
 use tauri::{command, Emitter, State, Window};
 use tokio::time::Duration;
 use windows::Win32::Foundation::{HWND, POINT};
+use windows::Win32::UI::Input::KeyboardAndMouse::VK_OEM_2;
 use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
 
 #[command]
@@ -209,6 +210,56 @@ pub fn click_all_dofus_windows_with_delay(
 
         let random_delay = rng.gen_range(delay_min..=delay_max);
         thread::sleep(Duration::from_millis(random_delay));
+    }
+
+    Ok(())
+}
+
+#[command]
+pub fn send_key_to_all_dofus_windows(
+    state: State<'_, Arc<Mutex<WindowManager>>>,
+    window: Window,
+    key: String,
+) -> Result<(), String> {
+    let manager = state
+        .lock()
+        .map_err(|_| "Échec du verrouillage de WindowManager".to_string())?;
+
+    let app_hwnd = window.hwnd().unwrap();
+    if !manager.is_focused_on_app_or_dofus(app_hwnd) {
+        return Ok(());
+    }
+
+    let dofus_windows = manager.dofus_windows();
+    let first_window = dofus_windows.first();
+
+    for win in dofus_windows.iter().skip(1) {
+        let hwnd = HWND(win.hwnd as *mut c_void);
+
+        if let Err(e) = focus_window(hwnd) {
+            eprintln!("Erreur lors du focus de la fenêtre: {}", e);
+        }
+        
+        thread::sleep(Duration::from_millis(50));
+
+        println!("Envoi de la touche '{}'", key);
+
+        if let Err(e) = send_key(&key) {
+            eprintln!("Erreur lors de l'envoi de la touche '{}': {}", key, e);
+        }
+
+        thread::sleep(Duration::from_millis(50));
+
+        if let Err(e) = send_key(&key) {
+            eprintln!("Erreur lors de l'envoi de la touche '{}': {}", key, e);
+        }
+    }
+
+    if let Some(first) = first_window {
+        let hwnd = HWND(first.hwnd as *mut c_void);
+        if let Err(e) = focus_window(hwnd) {
+            eprintln!("Erreur lors du focus de la première fenêtre: {}", e);
+        }
     }
 
     Ok(())

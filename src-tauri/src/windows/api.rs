@@ -5,7 +5,10 @@ use windows::Win32::Foundation::{BOOL, HWND, LPARAM, POINT, WPARAM};
 use windows::Win32::System::ProcessStatus::GetModuleBaseNameA;
 use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
-use windows::Win32::UI::Input::KeyboardAndMouse::{SetActiveWindow, SetFocus};
+use windows::Win32::UI::Input::KeyboardAndMouse::{
+    INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, SendInput,
+    SetActiveWindow, SetFocus, VIRTUAL_KEY, VkKeyScanA,
+};
 use windows::Win32::UI::WindowsAndMessaging::*;
 
 pub fn get_window_title(hwnd: HWND) -> Option<String> {
@@ -21,6 +24,47 @@ pub fn get_window_title(hwnd: HWND) -> Option<String> {
 
 fn make_lparam(x: i32, y: i32) -> LPARAM {
     LPARAM(((y & 0xFFFF) << 16 | (x & 0xFFFF)) as isize)
+}
+
+pub fn send_key(key: &str) -> Result<(), String> {
+    unsafe {
+        let scancode = VkKeyScanA(key.as_bytes()[0] as i8);
+
+        let mut inputs = [
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VIRTUAL_KEY(0),
+                        wScan: scancode as u16,
+                        dwFlags: KEYEVENTF_SCANCODE,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VIRTUAL_KEY(0),
+                        wScan: scancode as u16,
+                        dwFlags: KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+        ];
+
+        let result = SendInput(&mut inputs, std::mem::size_of::<INPUT>() as i32);
+
+        if result == 0 {
+            return Err("Failed to send key".to_string());
+        }
+
+        Ok(())
+    }
 }
 
 pub fn send_click(hwnd: HWND, pos: POINT) -> Result<(), String> {

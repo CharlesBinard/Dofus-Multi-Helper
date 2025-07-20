@@ -22,6 +22,7 @@ fn main() {
             shortcuts::commands::register_shortcut,
             shortcuts::commands::get_shortcuts,
             shortcuts::commands::remove_shortcut_key,
+            shortcuts::store::watch_key_to_send,
             windows::commands::get_active_dofus_window,
             windows::commands::focus_window_command,
             windows::commands::set_tauri_always_on_top,
@@ -33,6 +34,7 @@ fn main() {
             windows::commands::click_all_dofus_windows_with_delay,
             windows::commands::get_dofus_windows,
             windows::commands::refresh_windows,
+            windows::commands::send_key_to_all_dofus_windows,
         ])
         .setup(move |app| {
             let store = ShortcutStore::new(&app.handle());

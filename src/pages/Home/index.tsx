@@ -23,6 +23,10 @@ export const Home: React.FC = () => {
     clickAllDelays,
     removeShortcut,
     updateClickAllDelays,
+    autoFollowLeaderKey,
+    setAutoFollowLeaderKey,
+    watchingAutoFollowLeaderKey,
+    watchAutoFollowLeaderKey,
   } = useShortcuts();
   const { isAlwaysOnTop, toggleAlwaysOnTop } = useAlwaysOntop();
 
@@ -103,6 +107,10 @@ export const Home: React.FC = () => {
           clickAllDelays={clickAllDelays}
           updateClickAllDelays={updateClickAllDelays}
           removeShortcut={removeShortcut}
+          autoFollowLeaderKey={autoFollowLeaderKey}
+          setAutoFollowLeaderKey={setAutoFollowLeaderKey}
+          watchingAutoFollowLeaderKey={watchingAutoFollowLeaderKey}
+          watchAutoFollowLeaderKey={watchAutoFollowLeaderKey}
         />
       )}
     </Box>
