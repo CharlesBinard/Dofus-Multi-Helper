@@ -68,7 +68,7 @@ export const Settings: React.FC<SettingsProps> = ({
           <KeySettingInput
             label="Auto Follow Dofus key"
             value={autoFollowLeaderKey}
-            onSet={() => watchAutoFollowLeaderKey('auto_follow_leader')}
+            onSet={watchAutoFollowLeaderKey}
             onClear={() => setAutoFollowLeaderKey('')}
             watching={watchingAutoFollowLeaderKey}
           />

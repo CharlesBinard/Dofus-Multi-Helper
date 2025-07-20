@@ -7,7 +7,7 @@ use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, SendInput,
-    SetActiveWindow, SetFocus, VIRTUAL_KEY, VkKeyScanA,
+    SetActiveWindow, SetFocus, VIRTUAL_KEY, VkKeyScanA, MapVirtualKeyA, MAPVK_VK_TO_VSC, KEYBD_EVENT_FLAGS, VK_SHIFT, VK_CONTROL, VK_MENU
 };
 use windows::Win32::UI::WindowsAndMessaging::*;
 
@@ -26,38 +26,70 @@ fn make_lparam(x: i32, y: i32) -> LPARAM {
     LPARAM(((y & 0xFFFF) << 16 | (x & 0xFFFF)) as isize)
 }
 
+fn create_scancode_input(scancode: u16, flags: KEYBD_EVENT_FLAGS) -> INPUT {
+    INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: VIRTUAL_KEY(0),
+                wScan: scancode,
+                dwFlags: KEYEVENTF_SCANCODE | flags,
+                time: 0,
+                dwExtraInfo: 0,
+            },
+        },
+    }
+}
+
 pub fn send_key(key: &str) -> Result<(), String> {
+    if key.is_empty() {
+        return Ok(());
+    }
+
     unsafe {
-        let scancode = VkKeyScanA(key.as_bytes()[0] as i8);
+        let vk_scan_result = VkKeyScanA(key.as_bytes()[0] as i8);
+        if vk_scan_result == -1 {
+            return Err(format!("No key found for character: {}", key));
+        }
 
-        let mut inputs = [
-            INPUT {
-                r#type: INPUT_KEYBOARD,
-                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                    ki: KEYBDINPUT {
-                        wVk: VIRTUAL_KEY(0),
-                        wScan: scancode as u16,
-                        dwFlags: KEYEVENTF_SCANCODE,
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            },
-            INPUT {
-                r#type: INPUT_KEYBOARD,
-                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                    ki: KEYBDINPUT {
-                        wVk: VIRTUAL_KEY(0),
-                        wScan: scancode as u16,
-                        dwFlags: KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            },
-        ];
+        let vk_code = (vk_scan_result & 0xff) as u32;
+        let shift_state = (vk_scan_result >> 8) & 0xff;
 
-        let result = SendInput(&mut inputs, std::mem::size_of::<INPUT>() as i32);
+        let scancode = MapVirtualKeyA(vk_code, MAPVK_VK_TO_VSC) as u16;
+        if scancode == 0 {
+            return Err(format!("Could not map virtual key {} to scancode", vk_code));
+        }
+        
+        let needs_shift = (shift_state & 1) != 0;
+        let needs_ctrl = (shift_state & 2) != 0;
+        let needs_alt = (shift_state & 4) != 0;
+
+        let mut inputs: Vec<INPUT> = Vec::new();
+
+        if needs_shift {
+            inputs.push(create_scancode_input(MapVirtualKeyA(VK_SHIFT.0 as u32, MAPVK_VK_TO_VSC) as u16, Default::default()));
+        }
+        if needs_ctrl {
+            inputs.push(create_scancode_input(MapVirtualKeyA(VK_CONTROL.0 as u32, MAPVK_VK_TO_VSC) as u16, Default::default()));
+        }
+        if needs_alt {
+            inputs.push(create_scancode_input(MapVirtualKeyA(VK_MENU.0 as u32, MAPVK_VK_TO_VSC) as u16, Default::default()));
+        }
+
+        inputs.push(create_scancode_input(scancode, Default::default()));
+        inputs.push(create_scancode_input(scancode, KEYEVENTF_KEYUP));
+
+        if needs_alt {
+            inputs.push(create_scancode_input(MapVirtualKeyA(VK_MENU.0 as u32, MAPVK_VK_TO_VSC) as u16, KEYEVENTF_KEYUP));
+        }
+        if needs_ctrl {
+            inputs.push(create_scancode_input(MapVirtualKeyA(VK_CONTROL.0 as u32, MAPVK_VK_TO_VSC) as u16, KEYEVENTF_KEYUP));
+        }
+        if needs_shift {
+            inputs.push(create_scancode_input(MapVirtualKeyA(VK_SHIFT.0 as u32, MAPVK_VK_TO_VSC) as u16, KEYEVENTF_KEYUP));
+        }
+
+        let result = SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
 
         if result == 0 {
             return Err("Failed to send key".to_string());

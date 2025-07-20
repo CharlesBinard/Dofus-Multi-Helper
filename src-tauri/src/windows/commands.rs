@@ -8,7 +8,6 @@ use std::thread;
 use tauri::{command, Emitter, State, Window};
 use tokio::time::Duration;
 use windows::Win32::Foundation::{HWND, POINT};
-use windows::Win32::UI::Input::KeyboardAndMouse::VK_OEM_2;
 use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
 
 #[command]
@@ -240,15 +239,8 @@ pub fn send_key_to_all_dofus_windows(
             eprintln!("Erreur lors du focus de la fenêtre: {}", e);
         }
         
-        thread::sleep(Duration::from_millis(50));
+        thread::sleep(Duration::from_millis(20));
 
-        println!("Envoi de la touche '{}'", key);
-
-        if let Err(e) = send_key(&key) {
-            eprintln!("Erreur lors de l'envoi de la touche '{}': {}", key, e);
-        }
-
-        thread::sleep(Duration::from_millis(50));
 
         if let Err(e) = send_key(&key) {
             eprintln!("Erreur lors de l'envoi de la touche '{}': {}", key, e);

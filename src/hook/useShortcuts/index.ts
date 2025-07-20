@@ -25,7 +25,7 @@ export const useShortcuts = () => {
     storageClickAllDelays
   );
   const [autoFollowLeaderKey, setAutoFollowLeaderKey] = useState<string>(
-    localStorage.getItem('autoFollowLeaderKey') || ''
+    localStorage.getItem('autoFollowLeaderKey') || '/'
   );
 
   const updateClickAllDelays = ({ min, max }: UpdateClickAllDelaysParams) => {
@@ -111,6 +111,9 @@ export const useShortcuts = () => {
             });
             break;
           case 'auto_follow_leader':
+            await invoke('send_key_to_all_dofus_windows', {
+              key: autoFollowLeaderKey,
+            });
             await invoke('send_key_to_all_dofus_windows', {
               key: autoFollowLeaderKey,
             });
