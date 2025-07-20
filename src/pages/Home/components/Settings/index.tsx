@@ -120,6 +120,14 @@ export const Settings: React.FC<SettingsProps> = ({
           onRemove={removeShortcut}
           watching={watchingInput === 'auto_follow_leader'}
         />
+        <ShortcutSettingInput
+          label="Auto invite all"
+          shortcutType="auto_invite_all"
+          shortcutKey={shortcuts.auto_invite_all}
+          onRegister={registerShortcut}
+          onRemove={removeShortcut}
+          watching={watchingInput === 'auto_invite_all'}
+        />
       </Flex>
     </Flex>
   );

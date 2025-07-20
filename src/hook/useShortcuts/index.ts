@@ -11,6 +11,7 @@ export const useShortcuts = () => {
     click_all: '',
     click_all_delay: '',
     auto_follow_leader: '',
+    auto_invite_all: '',
   });
   const [watchingInput, setWatchingInput] = useState<
     keyof Shortcuts | undefined
@@ -113,10 +114,17 @@ export const useShortcuts = () => {
           case 'auto_follow_leader':
             await invoke('send_key_to_all_dofus_windows', {
               key: autoFollowLeaderKey,
+              repeat: 2,
             });
-            await invoke('send_key_to_all_dofus_windows', {
-              key: autoFollowLeaderKey,
-            });
+            break;
+          case 'auto_invite_all':
+            console.log('🚀 Auto invite all triggered!');
+            try {
+              await invoke('auto_invite_all_characters');
+              console.log('✅ Auto invite all completed successfully');
+            } catch (error) {
+              console.error('❌ Error in auto_invite_all:', error);
+            }
             break;
           default:
             console.warn(`Unhandled shortcut type: ${shortcutType}`);
@@ -155,6 +163,7 @@ export const useShortcuts = () => {
         'shortcut_triggered',
         (event) => {
           const { shortcut } = event.payload;
+          console.log('🔥 Shortcut triggered event received:', shortcut);
           if (shortcut) {
             handleShortcutTriggered(shortcut);
           }

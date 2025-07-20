@@ -35,6 +35,7 @@ fn main() {
             windows::commands::get_dofus_windows,
             windows::commands::refresh_windows,
             windows::commands::send_key_to_all_dofus_windows,
+            windows::commands::auto_invite_all_characters,
         ])
         .setup(move |app| {
             let store = ShortcutStore::new(&app.handle());

@@ -1,4 +1,4 @@
-use super::api::{focus_window, send_click, send_key};
+use super::api::{focus_window, send_click, send_key, send_text, send_enter};
 use super::manager::WindowManager;
 use rand::Rng;
 use serde::Deserialize;
@@ -219,6 +219,7 @@ pub fn send_key_to_all_dofus_windows(
     state: State<'_, Arc<Mutex<WindowManager>>>,
     window: Window,
     key: String,
+    repeat: u32,
 ) -> Result<(), String> {
     let manager = state
         .lock()
@@ -241,9 +242,11 @@ pub fn send_key_to_all_dofus_windows(
         
         thread::sleep(Duration::from_millis(20));
 
-
-        if let Err(e) = send_key(&key) {
-            eprintln!("Erreur lors de l'envoi de la touche '{}': {}", key, e);
+        for _ in 0..repeat {    
+            if let Err(e) = send_key(&key) {
+                eprintln!("Erreur lors de l'envoi de la touche '{}': {}", key, e);
+            }
+            thread::sleep(Duration::from_millis(50));
         }
     }
 
@@ -252,6 +255,55 @@ pub fn send_key_to_all_dofus_windows(
         if let Err(e) = focus_window(hwnd) {
             eprintln!("Erreur lors du focus de la première fenêtre: {}", e);
         }
+    }
+
+    Ok(())
+}
+
+#[command]
+pub fn auto_invite_all_characters(
+    state: State<'_, Arc<Mutex<WindowManager>>>,
+    window: Window,
+) -> Result<(), String> {
+    
+    let manager = state
+        .lock()
+        .map_err(|_| "Échec du verrouillage de WindowManager".to_string())?;
+
+    let app_hwnd = window.hwnd().unwrap();
+    if !manager.is_focused_on_app_or_dofus(app_hwnd) {
+        return Ok(());
+    }
+
+    let dofus_windows = manager.dofus_windows();
+    
+    if dofus_windows.is_empty() {
+        return Err("Aucune fenêtre Dofus trouvée".to_string());
+    }
+
+    // Récupérer la première fenêtre
+    let first_window = &dofus_windows[0];
+    let first_hwnd = HWND(first_window.hwnd as *mut c_void);
+    
+    // Focus sur la première fenêtre
+    focus_window(first_hwnd).map_err(|e| format!("Erreur lors du focus de la première fenêtre: {}", e))?;
+    thread::sleep(Duration::from_millis(100));
+
+    send_key("=").map_err(|e| format!("Erreur lors de l'envoi de la touche '=': {}", e))?;
+    thread::sleep(Duration::from_millis(50));
+
+    // Inviter tous les autres personnages depuis la première fenêtre
+    for (index, target_window) in dofus_windows.iter().skip(1).enumerate() {
+        let character_name = &target_window.name;
+        
+        // Taper la commande d'invitation
+        let invite_command = format!("/invite {}", character_name);
+        send_text(&invite_command).map_err(|e| format!("Erreur lors de l'envoi du texte '{}': {}", invite_command, e))?;
+        thread::sleep(Duration::from_millis(50));
+        
+        // Appuyer sur Entrée
+        send_enter().map_err(|e| format!("Erreur lors de l'envoi de la touche Entrée: {}", e))?;
+        thread::sleep(Duration::from_millis(200)); // Délai plus long entre les invitations
     }
 
     Ok(())

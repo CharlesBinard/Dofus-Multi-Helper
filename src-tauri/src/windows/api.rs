@@ -215,3 +215,34 @@ pub fn fetch_dofus_windows() -> Vec<DofusWindow> {
 
     windows
 }
+
+pub fn send_text(text: &str) -> Result<(), String> {
+    for ch in text.chars() {
+        send_key(&ch.to_string())?;
+        // Petit délai entre chaque caractère pour éviter les problèmes
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    Ok(())
+}
+
+pub fn send_enter() -> Result<(), String> {
+    unsafe {
+        let enter_scancode = MapVirtualKeyA(0x0D, MAPVK_VK_TO_VSC) as u16; // VK_RETURN
+        if enter_scancode == 0 {
+            return Err("Could not map Enter key to scancode".to_string());
+        }
+
+        let inputs = vec![
+            create_scancode_input(enter_scancode, Default::default()),
+            create_scancode_input(enter_scancode, KEYEVENTF_KEYUP),
+        ];
+
+        let result = SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+
+        if result == 0 {
+            return Err("Failed to send Enter key".to_string());
+        }
+
+        Ok(())
+    }
+}
