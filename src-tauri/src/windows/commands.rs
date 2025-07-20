@@ -294,7 +294,7 @@ pub fn auto_invite_all_characters(
     thread::sleep(Duration::from_millis(50));
 
     // Inviter tous les autres personnages depuis la première fenêtre
-    for (index, target_window) in dofus_windows.iter().skip(1).enumerate() {
+    for target_window in dofus_windows.iter().skip(1) {
         let character_name = &target_window.name;
         
         // Taper la commande d'invitation

@@ -10,7 +10,7 @@ use super::models::ShortcutData;
 pub struct ShortcutStore {
     pub shortcuts: Arc<Mutex<HashMap<String, String>>>,
     pub registering: Arc<Mutex<Option<String>>>,
-    pub app_handle: AppHandle,
+    pub _app_handle: AppHandle,
     pub watching_key_to_send: Arc<Mutex<bool>>,
     pub config_path: PathBuf,
 }
@@ -33,7 +33,7 @@ impl ShortcutStore {
         Self {
             shortcuts: Arc::new(Mutex::new(shortcuts)),
             registering: Arc::new(Mutex::new(None)),
-            app_handle: app_handle.clone(),
+            _app_handle: app_handle.clone(),
             watching_key_to_send: Arc::new(Mutex::new(false)),
             config_path,
         }
