@@ -1,6 +1,6 @@
 [package]
 name = "dofusmultihelper"
-version = "1.0.4",
+version = "1.0.4"
 description = "Dofus Multi Helper"
 authors = ["you"]
 edition = "2021"
