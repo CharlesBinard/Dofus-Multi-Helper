@@ -40,6 +40,9 @@ impl ShortcutStore {
     }
 
     pub fn save_shortcuts(&self) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(parent) = self.config_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
         let shortcuts_guard = self.shortcuts.lock().unwrap();
         let data = ShortcutData {
             shortcuts: shortcuts_guard.clone(),

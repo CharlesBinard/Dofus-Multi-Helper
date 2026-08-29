@@ -1,14 +1,14 @@
-use super::api::{focus_window, send_click, send_key, send_text, send_enter};
+use super::api::{click_windows_sequence, focus_window, send_key, send_text, send_enter};
 use super::manager::WindowManager;
-use rand::Rng;
+use super::models::DofusWindow;
 use serde::Deserialize;
 use std::ffi::c_void;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Duration;
 use tauri::{command, Emitter, State, Window};
-use tokio::time::Duration;
-use windows::Win32::Foundation::{HWND, POINT};
-use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+use windows::Win32::Foundation::HWND;
+use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
 
 #[command]
 pub fn get_active_dofus_window(
@@ -123,45 +123,58 @@ pub async fn prev_dofus_window(
     Ok(())
 }
 
+/// Collects the window list and the reference window for a click sequence.
+/// Returns `None` when the click should not happen (focus outside the app
+/// and the game, or no Dofus window known).
+fn gather_click_context(
+    state: &State<'_, Arc<Mutex<WindowManager>>>,
+    window: &Window,
+) -> Result<Option<(Vec<DofusWindow>, HWND)>, String> {
+    let manager = state
+        .lock()
+        .map_err(|_| "Échec du verrouillage de WindowManager".to_string())?;
+
+    let app_hwnd = window.hwnd().map_err(|e| e.to_string())?;
+    if !manager.is_focused_on_app_or_dofus(app_hwnd) {
+        return Ok(None);
+    }
+
+    let windows = manager.dofus_windows();
+    if windows.is_empty() {
+        return Ok(None);
+    }
+
+    // The hovered window defines the clicked point; when the app itself is
+    // focused, fall back to the last active Dofus window as reference.
+    let foreground = unsafe { GetForegroundWindow() };
+    let reference = if windows.iter().any(|w| w.hwnd == foreground.0 as usize) {
+        foreground
+    } else {
+        let fallback = manager
+            .active_dofus_window()
+            .or_else(|| windows.first().cloned())
+            .unwrap();
+        HWND(fallback.hwnd as *mut c_void)
+    };
+
+    Ok(Some((windows, reference)))
+}
+
 #[command]
 pub fn click_all_dofus_windows(
     state: State<'_, Arc<Mutex<WindowManager>>>,
     window: Window,
 ) -> Result<(), String> {
-    let mut cursor_pos = POINT::default();
-    unsafe {
-        if GetCursorPos(&mut cursor_pos).is_err() {
-            return Err("Échec de la récupération de la position du curseur".into());
-        }
-    }
-
-    let manager = state
-        .lock()
-        .map_err(|_| "Échec du verrouillage de WindowManager".to_string())?;
-
-    let app_hwnd = window.hwnd().unwrap();
-    if !manager.is_focused_on_app_or_dofus(app_hwnd) {
-        return Ok(());
-    }
-
-    let dofus_windows = manager.dofus_windows();
-
-    for win in dofus_windows {
-        let cursor_pos = cursor_pos;
-        let hwnd_raw = win.hwnd as isize;
-
+    if let Some((windows, reference)) = gather_click_context(&state, &window)? {
+        // HWND is not Send, so cross the thread boundary as a raw usize.
+        let reference_raw = reference.0 as usize;
         thread::spawn(move || {
-            let hwnd = HWND(hwnd_raw as *mut c_void);
-            let client_pos = cursor_pos;
-
-            if let Err(e) = send_click(hwnd, client_pos) {
-                eprintln!("Erreur lors de l'envoi du clic: {}", e);
+            let reference = HWND(reference_raw as *mut c_void);
+            if let Err(e) = click_windows_sequence(&windows, reference, None) {
+                eprintln!("Erreur lors du clic global: {}", e);
             }
-
-            thread::sleep(Duration::from_millis(50));
         });
     }
-
     Ok(())
 }
 
@@ -179,38 +192,19 @@ pub fn click_all_dofus_windows_with_delay(
 ) -> Result<(), String> {
     let delay_min = params.delay_min_ms.unwrap_or(100);
     let delay_max = params.delay_max_ms.unwrap_or(130);
-    let mut rng = rand::thread_rng();
 
-    let mut cursor_pos = POINT::default();
-    unsafe {
-        if GetCursorPos(&mut cursor_pos).is_err() {
-            return Err("Échec de la récupération de la position du curseur".into());
-        }
+    if let Some((windows, reference)) = gather_click_context(&state, &window)? {
+        // HWND is not Send, so cross the thread boundary as a raw usize.
+        let reference_raw = reference.0 as usize;
+        thread::spawn(move || {
+            let reference = HWND(reference_raw as *mut c_void);
+            if let Err(e) =
+                click_windows_sequence(&windows, reference, Some((delay_min, delay_max)))
+            {
+                eprintln!("Erreur lors du clic global avec délai: {}", e);
+            }
+        });
     }
-
-    let manager = state
-        .lock()
-        .map_err(|_| "Échec du verrouillage de WindowManager".to_string())?;
-
-    let app_hwnd = window.hwnd().unwrap();
-    if !manager.is_focused_on_app_or_dofus(app_hwnd) {
-        return Ok(());
-    }
-
-    let dofus_windows = manager.dofus_windows();
-
-    for win in dofus_windows {
-        let hwnd = HWND(win.hwnd as *mut c_void);
-        let client_pos = cursor_pos;
-
-        if let Err(e) = send_click(hwnd, client_pos) {
-            eprintln!("Erreur lors de l'envoi du clic: {}", e);
-        }
-
-        let random_delay = rng.gen_range(delay_min..=delay_max);
-        thread::sleep(Duration::from_millis(random_delay));
-    }
-
     Ok(())
 }
 

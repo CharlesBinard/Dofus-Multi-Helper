@@ -17,7 +17,7 @@ tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rdev = { version = "0.5.3" }
-windows = { version = "0.58.0", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_System_ProcessStatus", "Win32_System_Threading"] }
-tokio = { version = "1.41.1", features = ["full"] }
-rand = "0.8.5"
+# Version aligned with the one used by tauri 2.x so HWND types match.
+windows = { version = "0.61.3", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_ProcessStatus", "Win32_System_Threading", "Win32_Graphics_Gdi"] }
+rand = "0.10"
 

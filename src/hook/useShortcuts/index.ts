@@ -1,8 +1,19 @@
 import { invoke } from '@tauri-apps/api/core';
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Shortcuts } from '../../types';
 import { ClickAllDelays, UpdateClickAllDelaysParams } from './types';
+
+const DEFAULT_CLICK_ALL_DELAYS: ClickAllDelays = { min: 100, max: 130 };
+
+const loadClickAllDelays = (): ClickAllDelays => {
+  try {
+    const stored = localStorage.getItem('clickAllDelays');
+    return stored ? JSON.parse(stored) : DEFAULT_CLICK_ALL_DELAYS;
+  } catch {
+    return DEFAULT_CLICK_ALL_DELAYS;
+  }
+};
 
 export const useShortcuts = () => {
   const [shortcuts, setShortcuts] = useState<Shortcuts>({
@@ -21,12 +32,13 @@ export const useShortcuts = () => {
   const [watchingFocusChatKey, setWatchingFocusChatKey] =
     useState<boolean>(false);
 
-  const storageClickAllDelays = JSON.parse(
-    localStorage.getItem('clickAllDelays') || '{ "min": 100, "max": 130 }'
-  );
-  const [clickAllDelays, setClickAllDelays] = useState<ClickAllDelays>(
-    storageClickAllDelays
-  );
+  // Refs mirror the watching flags so the (long-lived) event listeners
+  // always read the current value instead of a stale closure capture.
+  const watchingAutoFollowLeaderKeyRef = useRef(false);
+  const watchingFocusChatKeyRef = useRef(false);
+
+  const [clickAllDelays, setClickAllDelays] =
+    useState<ClickAllDelays>(loadClickAllDelays);
   const [autoFollowLeaderKey, setAutoFollowLeaderKey] = useState<string>(
     localStorage.getItem('autoFollowLeaderKey') || '/'
   );
@@ -59,6 +71,7 @@ export const useShortcuts = () => {
   const watchAutoFollowLeaderKey = async () => {
     try {
       await invoke('watch_key_to_send');
+      watchingAutoFollowLeaderKeyRef.current = true;
       setWatchingAutoFollowLeaderKey(true);
     } catch (error) {
       console.error('Failed to watch key to send:', error);
@@ -68,6 +81,7 @@ export const useShortcuts = () => {
   const watchFocusChatKey = async () => {
     try {
       await invoke('watch_key_to_send');
+      watchingFocusChatKeyRef.current = true;
       setWatchingFocusChatKey(true);
     } catch (error) {
       console.error('Failed to watch focus chat key:', error);
@@ -159,6 +173,12 @@ export const useShortcuts = () => {
     [clickAllDelays, autoFollowLeaderKey, focusChatKey]
   );
 
+  // Always point to the latest handler so listeners can be registered once.
+  const handleShortcutTriggeredRef = useRef(handleShortcutTriggered);
+  useEffect(() => {
+    handleShortcutTriggeredRef.current = handleShortcutTriggered;
+  }, [handleShortcutTriggered]);
+
   useEffect(() => {
     loadShortcuts();
 
@@ -171,7 +191,6 @@ export const useShortcuts = () => {
         'input_register_event',
         (event) => {
           const { shortcut, key } = event.payload;
-          console.log('input_register_event', shortcut, key);
           if (shortcut) {
             setShortcuts((prev) => ({
               ...prev,
@@ -187,7 +206,7 @@ export const useShortcuts = () => {
         (event) => {
           const { shortcut } = event.payload;
           if (shortcut) {
-            handleShortcutTriggered(shortcut);
+            handleShortcutTriggeredRef.current(shortcut);
           }
         }
       );
@@ -196,11 +215,13 @@ export const useShortcuts = () => {
         'key_to_send_set',
         (event) => {
           const { key } = event.payload;
-          if (watchingAutoFollowLeaderKey) {
+          if (watchingAutoFollowLeaderKeyRef.current) {
             handleSetAutoFollowLeaderKey(key);
+            watchingAutoFollowLeaderKeyRef.current = false;
             setWatchingAutoFollowLeaderKey(false);
-          } else if (watchingFocusChatKey) {
+          } else if (watchingFocusChatKeyRef.current) {
             handleSetFocusChatKey(key);
+            watchingFocusChatKeyRef.current = false;
             setWatchingFocusChatKey(false);
           }
         }
@@ -215,7 +236,7 @@ export const useShortcuts = () => {
           u?.then((f) => f()).catch((e) => console.error('Unlisten error:', e))
       );
     };
-  }, [handleShortcutTriggered, loadShortcuts]);
+  }, [loadShortcuts]);
 
   return {
     shortcuts,
